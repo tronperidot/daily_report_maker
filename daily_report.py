@@ -2,6 +2,9 @@
 # coding:utf-8
 import subprocess
 from Tkinter import Tk
+from cls.my_print import MyPrint
+from cls.my_string import MyString
+import cls.formater
 
 # 見出しのタイトル
 TITLES = [
@@ -22,82 +25,59 @@ def setpb_data(data):
     #r = Tk()
     #r.clipboard_append(test)
 
-# consoleへの出力
-def log(msg):
-  print msg
-  return msg
-
-# 一行線を出力
-def line():
-  log('---------------------')
-
-# 見出しの出力
-def headline_log(msg):
-  log('')
-  line()
-  log(msg)
-  line()
-
-# percentの算出
-def percent(num):
-  return '---' if (not num) else num
-
-# 目標と達成率
-def progress_format():
-  goal = raw_input('目標率:')
-  achi = raw_input('達成率:')
-  return "（目標：{}% 達成率:{}%）\n".format(percent(goal), percent(achi))
-
-# 明日の目標
-def taget_frmat():
-  goal = raw_input('目標率:')
-  return "（目標：{}%）\n".format(percent(goal))
-
 # 作業実績の作成
 def detail(is_to_day):
+  printer = MyPrint()
+  contents = MyString()
   if is_to_day:
-    contents = TITLES[0]
+    contents.put(TITLES[0])
   else:
-    contents = TITLES[1]
+    contents.put(TITLES[1])
 
   while True:
-    log(str(PROJECTS).decode('string-escape'))
+    printer.log(str(PROJECTS).decode('string-escape'))
     project_idx = raw_input('プロジェクトを撰択して下さい。（範囲外で処理を抜けます。）:')
     project = PROJECTS.get(project_idx)
     if not project:
       break
-    log(project_idx)
-    log(project)
-    contents = contents + project
+    printer.log(project_idx)
+    printer.log(project)
+    contents.put(project)
     while True:
       msg = raw_input('作業内容を書いて下さい。（範囲外で処理を抜けます。）:')
       if not msg:
         break
-      msg = msg + ( progress_format() if is_to_day else taget_frmat() )
-      contents = contents + msg
-  return contents
+      contents.put(msg)
+      # HACK 汚い
+      msg = ( cls.formater.progress_format() if is_to_day else cls.formater.taget_frmat() )
+      contents.put(msg)
+  return str(contents)
 
 # 所感の作成
 def comment():
-  contents = TITLES[2]
-  log('所感の入力をして下さい（未記入で抜けます。）')
+  contents = MyString()
+  contents.put(TITLES[2])
+  printer.log('所感の入力をして下さい（未記入で抜けます。）')
   while True:
     msg = raw_input()
     if not msg:
       break
-    contents = contents + msg + '\n'
-  return contents
+    contents.put_line(msg)
+  return str(contents)
 
 # ここからメイン処理
-log('python app')
+printer = MyPrint()
+printer.log('python app')
+ms = MyString()
 
-headline_log('本日の作業内容入力モード')
-text = detail(True)
-headline_log('明日の作業予定入力モード')
-text = text + detail(False)
-headline_log('所感入力モード')
-text = text + comment()
-log(text)
+printer.headline_log('本日の作業内容入力モード')
+ms.put(detail(True))
+printer.headline_log('明日の作業予定入力モード')
+ms.put(detail(False))
+printer.headline_log('所感入力モード')
+ms.put(comment())
+text = str(ms)
+printer.log(text)
 
 # to clip borad
 setpb_data(text)
